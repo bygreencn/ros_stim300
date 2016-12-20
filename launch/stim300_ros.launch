@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+    <node name="stim300_node" pkg="stim300_ros" type="stim300lib.py" output="screen" />
+</launch>

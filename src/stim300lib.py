@@ -112,7 +112,7 @@ class Stim300Driver(object):
 
 
 def main():
-    rospy.init_node('stim300')
+    rospy.init_node('stim300_node')
     rospy.loginfo('stim300 ROS driver run')
     i = Stim300Driver()
     while(True):
