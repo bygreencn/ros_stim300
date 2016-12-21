@@ -1,4 +1,8 @@
 <?xml version="1.0"?>
 <launch>
-    <node name="stim300_node" pkg="stim300_ros" type="stim300lib.py" output="screen" />
+    <node name="stim300_node" pkg="stim300_ros" type="stim300lib.py" output="screen">
+        <param name="device_id" value="/dev/ttyUSB0"/>
+        <param name="topic_name" value="imu"/>
+        <param name="frame_id" value="map"/> 
+    </node>
 </launch>

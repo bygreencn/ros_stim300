@@ -5,13 +5,24 @@ import serial
 import numpy as np
 
 import rospy
+
 from std_msgs.msg import Header
 from sensor_msgs.msg import Imu
 #from geometry_msgs.msg import Quaternion
 
+def get_param(name, default):
+	try:
+		v = rospy.get_param(name)
+		rospy.loginfo("Found parameter: %s, value: %s"%(name, str(v)))
+	except KeyError:
+		v = default
+		rospy.logwarn("Cannot find value for parameter: %s, assigning "
+				"default: %s"%(name, str(v)))
+	return v
+
 
 class Stim300Driver(object):
-    frame_id = 0
+    
     #secs = 0
     #nsecs = 0
 
@@ -21,18 +32,34 @@ class Stim300Driver(object):
     }
     # Rate, acceleration, incliination
 
+    topic_name = 'imu/data'
+    frame_id = 'imu_link'
+    device_id = '/dev/ttyUSB0'
+
+
     def __init__(self):
         rospy.Time.from_sec(time.time())
-        self.serial = serial.Serial('/dev/ttyUSB0', baudrate=self._baudrate)
+        self.device_id = get_param('~device_id', '/dev/ttyUSB0')
+        self.topic_name = get_param('~topic_name', 'imu/data')
+        self.frame_id = get_param('~frame_id', 'imu_link')
+
+        
+
+        self.serial = serial.Serial(self.device_id, baudrate=self._baudrate)
+
+        rospy.loginfo("Found parameter: %s, value: %s"%(self.device_id, str(self.serial)))
+        
         self.datagram_identifier = chr(0x93)
         self.last_msg = None
         self.skipped_msgs = 0
-        self.imu_pub = rospy.Publisher('/imu/data', Imu, queue_size=10) #IMU message
-        rospy.loginfo("Found parameter: %s, value: %s"%('/dev/ttyUSB0', str(self.serial)))
+
         #rospy.Time.from_sec(time.time())
         #now = rospy.get_rostime()
         #secs = now.secs
         #nsecs = now.nsecs
+
+        self.imu_pub = rospy.Publisher(self.topic_name, Imu, queue_size=10) #IMU message
+
 
     def read(self):
         return self.serial.read(64 * 12)
@@ -88,9 +115,9 @@ class Stim300Driver(object):
         
         now = rospy.Time.now()
 
-        self.frame_id = self.frame_id + 1
         imu_msg = Imu()
         imu_msg.header.stamp = now
+        imu_msg.header.frame_id = self.frame_id
         imu_msg.angular_velocity.x = gyro[0]
         imu_msg.angular_velocity.y = gyro[1]
         imu_msg.angular_velocity.z = gyro[2]
@@ -113,7 +140,7 @@ class Stim300Driver(object):
 
 def main():
     rospy.init_node('stim300_node')
-    rospy.loginfo('stim300 ROS driver run')
+
     i = Stim300Driver()
     while(True):
         i.run()
